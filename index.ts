@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-import { parseArgs } from 'util'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'bun'
+import { parseArgs } from 'util'
 import { Cache } from './localCache'
 
 const { values } = parseArgs({
@@ -17,10 +17,24 @@ const { values } = parseArgs({
       type: 'string',
       default: '',
     },
+    'clear-cache': {
+      type: 'boolean',
+    },
   },
   strict: true,
   allowPositionals: true,
 })
+
+if (values['clear-cache']) {
+  try {
+    await Cache.clear()
+    console.log('All cache was deleted')
+    process.exit(0)
+  } catch (error) {
+    console.error('An error occured while deleting the cache')
+    process.exit(1)
+  }
+}
 
 if (!URL.canParse(values.origin))
   throw new Error('The origin specified cannot be parse')

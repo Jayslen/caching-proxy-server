@@ -23,4 +23,12 @@ export class Cache {
       encoding: 'utf-8',
     })
   }
+
+  static async clear() {
+    const cacheFiles = await fs.readdir(cacheFolder)
+
+    for (const file of cacheFiles) {
+      await Bun.file(path.join(cacheFolder, file)).delete()
+    }
+  }
 }
