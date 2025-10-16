@@ -67,16 +67,20 @@ Bun.serve({
       })
     }
 
-    const response = await fetch(urlToRequest)
-    const data = await response.json()
+    try {
+      const response = await fetch(urlToRequest)
+      const data = await response.json()
 
-    await Cache.set(resourceFileChache, data)
-
-    return Response.json(data, {
-      headers: {
-        'X-Cache': 'MISS',
-      },
-    })
+      await Cache.set(resourceFileChache, data)
+      return Response.json(data, {
+        headers: {
+          'X-Cache': 'MISS',
+        },
+      })
+    } catch (error) {
+      console.log(error)
+      return new Response('Internal error', { status: 500 })
+    }
   },
   error(error) {
     console.error(error)
