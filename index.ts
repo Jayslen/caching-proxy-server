@@ -3,6 +3,7 @@ import { parseArgs } from 'util'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'bun'
+import { Cache } from './localCache'
 
 const { values } = parseArgs({
   args: Bun.argv,
@@ -38,18 +39,14 @@ Bun.serve({
     await fs.mkdir(cacheFolder, { recursive: true })
 
     const resourceFileChache =
-      (urlToRequest.pathname + urlToRequest.search)
+      path
+        .join(origin.host, urlToRequest.pathname, urlToRequest.search)
         .slice(1)
         .replace(/[<>:"/\\|?*]+/g, '_') + '.json'
+    const saveCache = await Cache.get(resourceFileChache)
 
-    const resourceChaceFile = path.join(cacheFolder, resourceFileChache)
-    const isResourceCacheAvailable = await Bun.file(resourceChaceFile).exists()
-
-    if (isResourceCacheAvailable) {
-      const savedCache = await Bun.file(resourceChaceFile).json()
-      console.log(savedCache)
-
-      return Response.json(savedCache, {
+    if (saveCache) {
+      return Response.json(saveCache, {
         headers: {
           'X-Cache': 'HIT',
         },
@@ -59,9 +56,8 @@ Bun.serve({
     const response = await fetch(urlToRequest)
     const data = await response.json()
 
-    await fs.writeFile(resourceChaceFile, JSON.stringify(data), {
-      encoding: 'utf-8',
-    })
+    await Cache.set(resourceFileChache, data)
+
     return Response.json(data, {
       headers: {
         'X-Cache': 'MISS',
